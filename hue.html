@@ -1,0 +1,128 @@
+<html>
+<link href="https://fonts.googleapis.com/css?family=Quicksand" rel="stylesheet">
+<style>
+    .row {
+        display: flex;
+        justify-content: center;
+        flex-direction: row;
+    }
+
+    .draggable {
+        font-size: 0;
+    }
+
+    #win {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        z-index: 2;
+        display: none;
+    }
+
+    body {
+        text-align: center;
+        margin: 0;
+        font-family: 'Quicksand', sans-serif;
+        font-size: 25;
+        text-align: center;
+        background-color: black;
+        /*no-select*/
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+</style>
+<script src="http://code.jquery.com/jquery-latest.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script language="JavaScript" src="Color.js"></script>
+<script>
+    Color = net.brehaut.Color;
+    document.onmousemove = (e) => {
+        cursorX = e.pageX;
+        cursorY = e.pageY;
+    }
+    $(document).ready(() => {
+        gridSize = 20;
+        size = Math.min($(window).width(), $(window).height());
+        size /= gridSize;
+        for (i = 0; i < gridSize; i++) {
+            row = document.createElement("div");
+            row.className = "row";
+            row.style.height = size;
+            for (j = 0; j < gridSize; j++) {
+                var cell = document.createElement("div");
+                cell.style.width = size;
+                if (i != 0 && j != 0 && j != gridSize - 1 && i != gridSize - 1) {
+                    cell.className = "draggable";
+                    cell.id = (i - 1) * (gridSize - 2) + (j - 1);
+                    cell.innerText = (i - 1) * (gridSize - 2) + (j - 1);
+                } else {
+                    cell.innerText = "X";
+                    cell.id = "x";
+                }
+                cell.style.backgroundColor = Color([i / gridSize * 200 + 55, j / gridSize * 155 + 50, (i + j) / gridSize * 128]).toCSS();
+                row.appendChild(cell);
+            }
+            document.body.appendChild(row);
+        }
+        $(".draggable").draggable({
+            start: (ev, ui) => {
+                ev.target.style.zIndex = 1;
+            },
+            stop: (ev, ui) => {
+                var obj = ev.target;
+                ev.target.style.zIndex = 0;
+                obj.style.left = "";
+                obj.style.top = "";
+                var toChange = document.elementFromPoint(cursorX, cursorY);
+                if (toChange == null || toChange.className == "row" || toChange.id == "x") return;
+                swapColors(obj, toChange);
+                check();
+            }
+        });
+        $("#win").click(() => {
+            $("#win").slideUp("slow");
+            shuffle();
+        });
+        shuffle();
+    });
+
+    function swapColors(obj1, obj2) {
+        var tmpColor = obj1.style.backgroundColor;
+        var text = obj1.innerText;
+        obj1.style.backgroundColor = obj2.style.backgroundColor;
+        obj2.style.backgroundColor = tmpColor;
+        obj1.innerText = obj2.innerText;
+        obj2.innerText = text;
+    }
+
+    function shuffle() {
+        for (i = 0; i < gridSize - 2; i++)
+            for (j = 0; j < gridSize - 2; j++) {
+                var obj1 = $("#" + (i * (gridSize - 2) + j)).get(0);
+                var random = Math.floor(Math.random() * (gridSize - 2) * (gridSize - 2));
+                var obj2 = $(".draggable").eq(random).get(0);
+                swapColors(obj1, obj2);
+            }
+
+    }
+
+    function check() {
+        complete = true;
+        Array.from($(".draggable")).forEach((cell) => {
+            if (cell.id != cell.innerText)
+                complete = false;
+        });
+        if (complete)
+            $("#win").fadeIn("slow");
+    }
+</script>
+
+<body>
+    <div id="win"><img src="heart.png" /></div>
+</body>
+
+</html>
